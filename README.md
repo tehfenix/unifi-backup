@@ -30,9 +30,20 @@ Save these for later.
 **Disclaimer: the secret will be stored in plain text in your local .tfstate file.**
 
 ### Ubuntu server Part
-On your Cloud Controller you first need to give your user account access to where UniFi Cloud Controller Stores its auto-backups.
+#### Dependencies
+The backup script relies on the AWS Cli which can be installed on Ubuntu server with
 
-1. At a prompt run `sudo usermod -a -G unifi your_user_name` replacing *your_user_name* with the login you use. This adds your Linux user into the group with permissions to where the backups are stored.
+`sudo apt install awscli`.
+
+Once installed you need to configure it with your generated credentials (above). Do this by running
+
+`aws configure`
+
+Provide your credentials (above) when requested. If prompted for a region use `eu-west-2` unless you've overridden this in the *variables.tf* file.
+
+#### Configuration
+
+1. On your Cloud Controller you first need to give your user account access to where UniFi Cloud Controller Stores its auto-backups. At a prompt run `sudo usermod -a -G unifi your_user_name` replacing *your_user_name* with the login you use. This adds your Linux user into the group with permissions to where the backups are stored.
 
 2. Logout by typing `logout` and then connect again (SSH or local console).
 
