@@ -5,7 +5,6 @@ provider "aws" {
 }
 
 resource "aws_s3_bucket" "backup-bucket" {
-  bucket = var.bucket-name
   acl    = "private"
 }
 
@@ -18,27 +17,25 @@ resource "aws_iam_access_key" "unifi-key" {
   user = "${aws_iam_user.unifi-backup-user.name}"
 }
 
-resource "aws_iam_user_policy" "iam-policy" {
-  name        = "WriteOnly_S3_UnifiBackup"
-  user = "${aws_iam_user.unifi-backup-user.name}"
-
-  policy = <<EOF
-  {
-      "Version": "2012-10-17",
-      "Statement": [
-          {
-              "Sid": "VisualEditor0",
-              "Effect": "Allow",
-              "Action": [
-                  "s3:PutObject",
-                  "s3:AbortMultipartUpload",
-                  "s3:PutObjectTagging"
-              ],
-              "Resource": "arn:aws:s3:::${aws_s3_bucket.backup_bucket.id}/*"
-          }
-      ]
+data "aws_iam_policy_document" "s3policy" {
+  statement {
+    actions   = ["s3:PutObject", "S3:AbortMultipartUpload", "s3:PutObjectTagging"]
+    resources = ["${aws_s3_bucket.backup-bucket.arn}/*"]
   }
-EOF
+}
+
+resource "aws_iam_policy" "policy" {
+    name        = "WriteOnly_S3_UnifiBackup"
+    path        = "/"
+    description = "Allows backup of UniFi auto-backup files"
+
+    policy = "${data.aws_iam_policy_document.s3policy.json}"
+  }
+
+resource "aws_iam_policy_attachment" "attach-policy" {
+  name       = "policy-attachment"
+  users      = ["${aws_iam_user.unifi-backup-user.id}"]
+  policy_arn = "${aws_iam_policy.policy.arn}"
 }
 
 output "key-id" {
@@ -47,4 +44,8 @@ output "key-id" {
 
 output "key-secret" {
   value = "${aws_iam_access_key.unifi-key.secret}"
+}
+
+output "bucket-name" {
+  value = "${aws_s3_bucket.backup-bucket.id}"
 }
